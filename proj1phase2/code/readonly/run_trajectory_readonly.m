@@ -1,6 +1,6 @@
 % Used for HKUST ELEC 6910P 
 
-function run_trajectory_readonly(h1, h2, h3, h4, h5, h6, h7, h8, h9, h10,trajectory_generator)
+function run_trajectory_readonly(h1, h2, h3, h4, h5, h6, h7, h8, h9)
 
 % Sensor parameters
 fnoise = 1;           % Standard deviation of gaussian noise for external disturbance (N)
@@ -32,7 +32,7 @@ F      = params.mass*params.grav;
 M      = [0;0;0];
 
 % Time
-tstep    = 0.002;  % Time step for solving equations of motion
+tstep    = 0.002;  % Time step for solving equations of motion // FIXME: not 0.01
 cstep    = 0.01;   % Period of calling student code
 vstep    = 0.05;   % visualization interval
 time     = 0;      % current time
@@ -98,7 +98,7 @@ while (1)
     true_s = xsave(end,:)';
     time = time + cstep;
     
-    des_s = trajectory_generator(time, true_s);
+    des_s = trajectory_generator(time);
     [F,M] = controller(time, true_s, des_s);
     
     if time >= time_tol
@@ -114,7 +114,7 @@ while (1)
         if ~vis_init 
             grid on;    
             axis equal;        
-            axis ([-5 5 -5 5 -1 4]);
+            axis ([-10 10 -10 10 -1 4]);
         end
         %plot3(des_s(1),des_s(2),des_s(3),'m-');
         ll = 0.175;
@@ -242,11 +242,9 @@ while (1)
         end
         hold off;
         
-        %% Plot roll orientation
+        %% Plot roll oriengation
         subplot(h2);          
-%        true_ypr = R_to_ypr(quaternion_to_R(true_s(7:10))')*180/pi;      
-        [true_r,true_p,true_y] = RotToRPY_ZXY(quaternion_to_R(true_s(7:10))');      
-        true_ypr = [true_y,true_p,true_r] *180/pi;
+        true_ypr = R_to_ypr(quaternion_to_R(true_s(7:10))')*180/pi;      
         if ~vis_init 
             hold on;            
             throll  = plot(time, true_ypr(3),'r-','LineWidth',1);
@@ -275,26 +273,10 @@ while (1)
             set(thpitch, 'XData', [get(thpitch, 'XData') time]);
             set(thpitch, 'YData', [get(thpitch, 'YData') true_ypr(2)]);
             hold off;
-        end     
-        
-                %% Plot yaw orientation
-        subplot(h4);               
-        if ~vis_init 
-            hold on;                      
-            thyaw = plot(time, true_ypr(1),'r-','LineWidth',1);         
-            hold off;
-            xlabel('Time (s)');
-            ylabel('yaw degree');
-            axis ([0, time_tol, -45, 45]);               
-        else
-            hold on;           
-            set(thyaw, 'XData', [get(thyaw, 'XData') time]);
-            set(thyaw, 'YData', [get(thyaw, 'YData') true_ypr(1)]);
-            hold off;
-        end  
+        end            
        
         %% Plot body frame velocity
-        subplot(h5);            
+        subplot(h4);            
         true_v = true_s(4:6);
         des_v  = des_s(4:6);
         if ~vis_init 
@@ -314,7 +296,7 @@ while (1)
             hold off;  
         end;
         
-        subplot(h6);    
+        subplot(h5);    
         if ~vis_init 
             hold on;            
             thvy = plot(time,true_v(2),'r-','LineWidth',1);
@@ -331,7 +313,7 @@ while (1)
             set(ehvy, 'YData', [get(ehvy, 'YData') des_v(2)]);  
             hold off;  
         end;
-        subplot(h7);    
+        subplot(h6);    
         if ~vis_init 
             hold on;            
             thvz = plot(time,true_v(3),'r-','LineWidth',1);
@@ -350,7 +332,7 @@ while (1)
         end;          
         
         %% Plot world frame position
-        subplot(h8);            
+        subplot(h7);            
         true_p = true_s(1:3);
         des_p  = des_s(1:3);
         if ~vis_init 
@@ -360,7 +342,7 @@ while (1)
             hold off;
             xlabel('Time (s) [Red: True; Blue: Des]');
             ylabel('X World Position (m)');
-            axis ([0, time_tol, -4, 4]);               
+            axis ([0, time_tol, -3, 3]);               
         else        
             hold on;
             set(thpx, 'XData', [get(thpx, 'XData') time]);
@@ -370,7 +352,7 @@ while (1)
             hold off;  
         end;
         
-        subplot(h9);    
+        subplot(h8);    
         if ~vis_init 
             hold on;            
             thpy = plot(time,true_p(2),'r-','LineWidth',1);
@@ -378,7 +360,7 @@ while (1)
             hold off;
             xlabel('Time (s) [Red: True; Blue: Des]');
             ylabel('Y World Position (m)');
-            axis ([0, time_tol, -4, 4]);               
+            axis ([0, time_tol, -3, 3]);               
         else        
             hold on;
             set(thpy, 'XData', [get(thpy, 'XData') time]);
@@ -387,7 +369,7 @@ while (1)
             set(ehpy, 'YData', [get(ehpy, 'YData') des_p(2)]);  
             hold off;  
         end;
-        subplot(h10);    
+        subplot(h9);    
         if ~vis_init 
             hold on;            
             thpz = plot(time,true_v(3),'r-','LineWidth',1);
@@ -395,7 +377,7 @@ while (1)
             hold off;
             xlabel('Time (s) [Red: True; Blue: Des]');
             ylabel('Z World Position (m)');
-            axis ([0, time_tol, -4, 4]);               
+            axis ([0, time_tol, -3, 3]);               
         else        
             hold on;
             set(thpz, 'XData', [get(thpz, 'XData') time]);
