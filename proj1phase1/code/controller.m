@@ -30,8 +30,10 @@ I = params.I;
 % PID params
 Kp_xy = 3;            Kd_xy = 2; 
 Kp_z = 12;             Kd_z = 12;
-Kp_phi_theta = 6000;     Kd_phi_theta = 60;
-Kp_psi = 100;           Kd_psi = 60;
+Kp_phi_theta = 1500;     Kd_phi_theta = 15;
+Kp_psi = 25;           Kd_psi = 15;
+% Kp_phi_theta = 6000;     Kd_phi_theta = 60;
+% Kp_psi = 100;           Kd_psi = 60;
 
 
 % loop

@@ -84,7 +84,12 @@ ehpx       = [];
 ehpy       = [];
 ehpz       = [];
 
-
+rms_x = [];
+rms_y = [];
+rms_z = [];
+rms_xv = [];
+rms_yv = [];
+rms_zv = [];
 % Start Simulation run_trajectory_readonly
 disp('Start Simulation ...');
 while (1)
@@ -100,6 +105,14 @@ while (1)
     
     des_s = trajectory_generator(time);
     [F,M] = controller(time, true_s, des_s);
+    
+    error = true_s - des_s;
+    rms_x =[rms_x error(1)];
+    rms_y =[rms_y error(2)];
+    rms_z = [rms_z error(3)];
+    rms_xv = [rms_xv error(4)];
+    rms_yv = [rms_yv error(5)];
+    rms_zv = [rms_zv error(6)];
     
     if time >= time_tol
         break;
@@ -397,3 +410,4 @@ while (1)
 %     pause
 
 end;
+[rms(rms_x) rms(rms_y) rms(rms_z) rms(rms_xv) rms(rms_yv) rms(rms_zv)]

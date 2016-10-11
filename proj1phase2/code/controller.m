@@ -1,5 +1,4 @@
 function [F, M] = controller(t, s, s_des)
-% Note that the rotation (s(7:10)) is R^{body}_{world}.
 
 % 1-x
 % 2-y
@@ -12,8 +11,7 @@ function [F, M] = controller(t, s, s_des)
 % 12-q
 % 13-r
 
-
-global params 	
+global params
 persistent   prev_des   prev_t
 
 if isempty(prev_t)
@@ -32,8 +30,10 @@ I = params.I;
 % PID params
 Kp_xy = 3;            Kd_xy = 2; 
 Kp_z = 12;             Kd_z = 12;
-Kp_phi_theta = 6000;     Kd_phi_theta = 60;
-Kp_psi = 100;           Kd_psi = 60;
+Kp_phi_theta = 1500;     Kd_phi_theta = 15;
+Kp_psi = 25;           Kd_psi = 15;
+% Kp_phi_theta = 6000;     Kd_phi_theta = 60;
+% Kp_psi = 100;           Kd_psi = 60;
 
 
 % loop
@@ -74,11 +74,6 @@ M = I * omega_dot + cross(s(11:13), I*s(11:13));
 
 prev_des = s_des;
 prev_t = t;
-
-
-
-
-
-%F = 1.0; M = [0.0, 0.0, 0.0]; % You should calculate the output F and M
+%F = 1.0; M = [0.0, 0.0, 0.0]'; % You should calculate the output F and M
 
 end
