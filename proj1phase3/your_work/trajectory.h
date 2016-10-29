@@ -1,54 +1,78 @@
-#ifndef trajectory_h
-#define trajectory_h
-#include <stdio.h>
+#ifndef control_funtion_h
+#define control_funtion_h
 
-using namespace Eigen;
+#include <math.h>
 
-/*
- * this function is to get desired states for specific trajectory, just generated, at time dt.
+/*please fill this controller function
  * input:
- * dT   -> the time
- * hover_pos -> the desired position where you want quadrotor to hover
- * now_vel -> maybe useless
+ * des_pos -> desired position
+ * des_vel -> desired velocity
+ * des_acc -> desired acceleration
+ * des_yaw -> desired yaw angle
+ * now_pos -> now psition
+ * now_vel -> body velocity
+ * Kp      -> P gain for position loop
+ * Kd      -> P gain for velocity loop
+ * Mass    -> quality of the quadrotor
  *
+ 
  * output:
- * desired_pos -> desired position at dT
- * desired_vel -> desired velocity at dT
- * desired_acc -> desired acceleration at dT
- * return:
- * true  -> you have alread configured desired states
- * false -> no desired state
- */
-bool trajectory_control(const double dT, 
-        const Vector3d hover_pos,
-        const Vector3d now_vel,
-        Vector3d & desired_pos,
-        Vector3d & desired_vel,
-        Vector3d & desired_acc
-        )
+ * rpy -> target attitude for autopilot
+ * target_thrust     -> target thrust of the quadrotor
+ * */
+void SO3Control_function( const double des_pos[3],
+                          const double des_vel[3],
+                          const double des_acc[3],
+                          const double des_yaw,
+                          const double now_pos[3],
+                          const double now_vel[3],
+                          const double now_yaw,
+                          const double Kp[3],
+                          const double Kd[3],
+                          const double Mass,
+                          const double Gravity,
+                          double rpy[3],
+                          double &target_thrust
+                        )
 {
-    //if you don't want to use Eigen, then you can use these arrays
-    //or you can delete them and use Eigen
-    double hover_p[3], now_v[3], desired_p[3], desired_v[3], desired_a[3];
-    hover_p[0] = hover_pos.x();
-    hover_p[1] = hover_pos.y();
-    hover_p[2] = hover_pos.z();
-    now_v[0] = now_vel.x();
-    now_v[1] = now_vel.y();
-    now_v[2] = now_vel.z();
-    //your code // please use coefficients from matlab to get desired states
 
-    //output
-    desired_pos.x() = desired_p[0];
-    desired_pos.y() = desired_p[1];
-    desired_pos.z() = desired_p[2];
-    desired_vel.x() = desired_v[0];
-    desired_vel.y() = desired_v[1];
-    desired_vel.z() = desired_v[2];
-    desired_acc.x() = desired_a[0];
-    desired_acc.y() = desired_a[1];
-    desired_acc.z() = desired_a[2];
+        std::cout << "my control function " << std::endl;
+	
+	double acc_x_control = Kd[0]*(des_vel[0] - now_vel[0]) + Kp[0]*(des_pos[0] - now_pos[0]);
+	double acc_y_control = Kd[1]*(des_vel[1] - now_vel[1]) + Kp[1]*(des_pos[1] - now_pos[1]);
+	double acc_z_control = Kd[2]*(des_vel[2] - now_vel[2]) + Kp[2]*(des_pos[2] - now_pos[2]);
 
-    return true; // if you have got desired states, true.
+        rpy[0] = (acc_x_control*sin(des_yaw) - acc_y_control*cos(des_yaw)) / Gravity;
+	rpy[1] = (acc_x_control*cos(des_yaw) + acc_y_control*sin(des_yaw)) / Gravity;
+
+	double psi_control = des_yaw - now_yaw;
+	if(psi_control >= M_PI)
+		psi_control -=2*M_PI;
+	else if(psi_control <= -M_PI)
+		psi_control += 2*M_PI;
+	else;
+	rpy[2] = psi_control;
+
+	target_thrust = Mass*(Gravity + acc_z_control);
+	
+
+	 
+      
+       //std::cout << "ROLL:   "<<rpy[0]<<std::endl;
+        //std::cout<< "PITCH:   "<<rpy[1]<<std::endl;
+        //std::cout << "YAW:   "<<rpy[2]<<std::endl;
+        std::cout << "thrust "<<target_thrust << std::endl;
+	   std::cout << "pos0:   "<<now_pos[0]<<std::endl;
+	   std::cout << "pos1:   "<<now_pos[1]<<std::endl;
+	std::cout << "pos2:   "<<now_pos[2]<<std::endl;
+
+std::cout << "des0:   "<<des_pos[0]<<std::endl;
+	   std::cout << "des1:   "<<des_pos[1]<<std::endl;
+	std::cout << "des2:   "<<des_pos[2]<<std::endl;
+
+	std::cout<<"Kp2  "<<Kp[2]<<std::endl;
+	std::cout<<"Kd2  "<<Kd[2]<<std::endl;
+
+
 }
 #endif

@@ -51,11 +51,7 @@ acc_z_control = Kd_z *(s_des(6)-s(6)) + Kp_z *(s_des(3)-s(3)); %+ (s_des(6) - pr
 phi_control = 1/g*(acc_x_control*sin(psi) - acc_y_control*cos(psi));
 theta_control = 1/g*(acc_x_control*cos(psi) + acc_y_control*sin(psi));
 
-% if d_psi>psi && s(13)<0
-%     d_psi = d_psi - pi;
-% elseif d_psi<psi && s(13)>0
-%     d_psi = d_psi + pi;
-% end
+
 
 psi_control = d_psi - psi;
 if psi_control>=pi
