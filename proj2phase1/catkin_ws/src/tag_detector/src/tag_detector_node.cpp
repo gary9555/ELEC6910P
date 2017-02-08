@@ -85,6 +85,9 @@ void process(const vector<int> &pts_id, const vector<cv::Point3f> &pts_3, const 
     R.setIdentity();
     T.setZero();
     //ROS_INFO("write your code here!");
+
+    vector<cv::Point2f> undist_pts_2;
+    cv::undistortPoints(pts_2, undist_pts_2, K, D);
     
     // get the estimated H matrix by (u,v) and (X,Y,Z)
     MatrixXd A(2*pts_id.size(), 9);
@@ -93,24 +96,35 @@ void process(const vector<int> &pts_id, const vector<cv::Point3f> &pts_3, const 
         A(row1,0) = pts_3[i].x;
         A(row1,1) = pts_3[i].y;
         A(row1,2) = 1;
-        A(row1,6) = -pts_3[i].x * pts_2[i].x;
-        A(row1,7) = -pts_3[i].y * pts_2[i].x;
-        A(row1,8) = -pts_2[i].x;
+        A(row1,3) = 0;
+        A(row1,4) = 0;
+        A(row1,5) = 0;
+        A(row1,6) = -pts_3[i].x * undist_pts_2[i].x;
+        A(row1,7) = -pts_3[i].y * undist_pts_2[i].x;
+        A(row1,8) = -undist_pts_2[i].x;
 
+        A(row2,0) = 0;
+        A(row2,1) = 0;
+        A(row2,2) = 0;
         A(row2,3) = pts_3[i].x;
         A(row2,4) = pts_3[i].y;
         A(row2,5) = 1;
-        A(row2,6) = -pts_3[i].x * pts_2[i].y;
-        A(row2,7) = -pts_3[i].y * pts_2[i].y;
-        A(row2,8) = -pts_2[i].y;
+        A(row2,6) = -pts_3[i].x * undist_pts_2[i].y;
+        A(row2,7) = -pts_3[i].y * undist_pts_2[i].y;
+        A(row2,8) = -undist_pts_2[i].y;
     }
     JacobiSVD<MatrixXd> svd(A, ComputeThinU | ComputeThinV);
-    VectorXd zero(2*pts_id.size());
-    MatrixXd h = svd.solve(zero);
+   
+    int rowNum=svd.matrixV().rows();
+    MatrixXd h(9,1);
+    h=svd.matrixV().col(rowNum-1);
+
+    //VectorXd zero(2*pts_id.size());
+    //MatrixXd h = svd.solve(zero);
 
 
-    Matrix3d H;
-    H << h(0,0), h(1,0), h(2,0),
+    Matrix3d KH;
+    KH << h(0,0), h(1,0), h(2,0),
          h(3,0), h(4,0), h(5,0),
          h(6,0), h(7,0), h(8,0);
 
@@ -121,7 +135,7 @@ void process(const vector<int> &pts_id, const vector<cv::Point3f> &pts_3, const 
         }
     }
 
-    Matrix3d KH = KK.inverse()*H;
+    //Matrix3d KH = KK.inverse()*H; 
     Vector3d one = KH.col(0);
     Vector3d two = KH.col(1);
     Vector3d three = one.cross(two);
@@ -133,7 +147,12 @@ void process(const vector<int> &pts_id, const vector<cv::Point3f> &pts_3, const 
     MatrixXd U = svd2.matrixU();
     MatrixXd V = svd2.matrixV();
     R = U*V.transpose();
-    T = three/one.norm();
+    T = KH.col(2)/one.norm();
+    if(T(2)<0){
+        T*=-1;
+        R.col(0) = -R.col(0);
+        R.col(1) = -R.col(1);
+    }
 
 
 
@@ -155,6 +174,39 @@ void process(const vector<int> &pts_id, const vector<cv::Point3f> &pts_3, const 
     odom_yourwork.pose.pose.orientation.y = Q_yourwork.y();
     odom_yourwork.pose.pose.orientation.z = Q_yourwork.z();
     pub_odom_yourwork.publish(odom_yourwork);
+
+    static double error_x = 0;
+    static double error_y = 0;
+    static double error_z = 0;
+    static double counter = 0;
+    static double Tx;
+    static double Ty;
+    static double Tz;
+    static double tx;
+    static double ty;
+    static double tz;
+    static double rms_x;
+    static double rms_y;
+    static double rms_z;
+
+    Tx = T(0);
+    Ty = T(1);
+    Tz = T(2);
+    tx = t.at<double>(0, 0);
+    ty = t.at<double>(1, 0);
+    tz = t.at<double>(2, 0);
+
+    error_x += (tx-Tx)*(tx-Tx);
+    error_y += (ty-Ty)*(ty-Ty);
+    error_z += (tz-Tz)*(tz-Tz);
+    counter++;
+    rms_x = sqrt(error_x/counter);
+    rms_y = sqrt(error_y/counter);
+    rms_z = sqrt(error_z/counter);
+    std::cout<<"rms_x "<<rms_x<<endl;
+    std::cout<<"rms_y "<<rms_y<<endl;
+    std::cout<<"rms_z "<<rms_z<<endl;
+
 }
 
 cv::Point3f getPositionFromIndex(int idx, int nth){
