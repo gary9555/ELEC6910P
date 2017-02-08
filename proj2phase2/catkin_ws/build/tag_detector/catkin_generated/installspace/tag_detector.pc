@@ -1,0 +1,8 @@
+prefix=/home/gary9555/Desktop/ELEC6910P/proj2phase2/catkin_ws/install
+
+Name: tag_detector
+Description: Description of tag_detector
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/gary9555/Desktop/ELEC6910P/proj2phase2/catkin_ws/install/lib 
+Requires: 
